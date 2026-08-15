@@ -11,6 +11,7 @@ import { useAppSelector, useAppDispatch, shallowEqualApp } from '@/store'
 import { closeImmersive, fetchChangeMusicAction, playPlaylistAction } from '@/views/player/store/player'
 import { getImageSize } from '@/utils/format'
 import { getUserPlaylist, type PlaylistItem } from '@/views/mine/service/playlist'
+import ToastMessage from '@/components/toast-message'
 import {
   StepBackwardOutlined, StepForwardOutlined,
   PauseCircleOutlined, PlayCircleOutlined,
@@ -28,6 +29,8 @@ const ImmersivePlayer = memo(() => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [barVisible, setBarVisible] = useState(true)
   const [liked, setLiked] = useState(false)
+  const [toasts, setToasts] = useState<{ id: number }[]>([])
+  const toastIdRef = useRef(0)
   const [coverError, setCoverError] = useState(false)
   // 进度的本地状态（每 200ms 更新一次，减少 re-render）
   const [progress, setProgress] = useState(0)
@@ -185,6 +188,17 @@ const ImmersivePlayer = memo(() => {
   const togglePlay = () => togglePlayRef.current()
   const handlePrev = useCallback(() => dispatch(fetchChangeMusicAction(false)), [dispatch])
   const handleNext = useCallback(() => dispatch(fetchChangeMusicAction(true)), [dispatch])
+  const handleLike = () => {
+    if (!isLoggedIn) {
+      const id = ++toastIdRef.current
+      setToasts(t => [...t, { id }])
+      return
+    }
+    setLiked(v => !v)
+  }
+  const removeToast = useCallback((id: number) => {
+    setToasts(t => t.filter(x => x.id !== id))
+  }, [])
   const playAt = (i: number) => window.dispatchEvent(new CustomEvent('play-at-index', { detail: { index: i } }))
   const seekTo = (timeMs: number) => window.dispatchEvent(new CustomEvent('seek-to', { detail: { timeMs } }))
   const handleProgressClick = (e: React.MouseEvent) => {
@@ -196,6 +210,7 @@ const ImmersivePlayer = memo(() => {
   const coverUrl = getImageSize(picUrl, 560), trackThumb = getImageSize(picUrl, 96)
 
   return createPortal(
+    <>
     <Overlay $color={dominantColor}>
       <BgImage $src={coverUrl} /><Noise /><Particles><span className="p3" /></Particles>
       <CloseBtn onClick={close}>✕</CloseBtn>
@@ -263,7 +278,7 @@ const ImmersivePlayer = memo(() => {
             <CtrlBtn onClick={handleNext}><StepForwardOutlined /></CtrlBtn>
           </CtrlCluster>
           <CtrlCluster $align="right">
-            <CtrlBtn $liked={liked} onClick={() => setLiked(v => !v)}>{liked ? <HeartFilled /> : <HeartOutlined />}</CtrlBtn>
+            <CtrlBtn $liked={liked} onClick={handleLike}>{liked ? <HeartFilled /> : <HeartOutlined />}</CtrlBtn>
           </CtrlCluster>
         </Controls>
       </BottomBar>
@@ -296,7 +311,17 @@ const ImmersivePlayer = memo(() => {
         </PanelContent>
       </PlaylistPanel>
 
-    </Overlay>, document.body)
+    </Overlay>
+    {toasts.map((t, i) => (
+      <ToastMessage
+        key={t.id}
+        top={80 + i * 52}
+        msg="登录才可以收藏哦"
+        icon="(๑☉ᴗ☉)"
+        onDone={() => removeToast(t.id)}
+      />
+    ))}
+    </>, document.body)
 })
 
 export default ImmersivePlayer

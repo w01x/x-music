@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 
 interface Props {
@@ -6,6 +6,8 @@ interface Props {
   type?: 'success' | 'error' | 'warning'
   duration?: number
   onDone?: () => void
+  icon?: ReactNode // 自定义图标（文字/颜文字等），提供后替代默认 lucide 图标
+  top?: number // 顶部偏移（多个 toast 堆叠时用），默认 80
 }
 
 const iconMap = {
@@ -20,15 +22,18 @@ const colorMap = {
   warning: '#faad14',
 }
 
-const ToastMessage = memo(({ msg, type = 'warning', duration = 2500, onDone }: Props) => {
+const ToastMessage = memo(({ msg, type = 'warning', duration = 2500, onDone, icon, top = 80 }: Props) => {
   const [phase, setPhase] = useState<'in' | 'show' | 'out'>('in')
+  // 用 ref 保存最新回调，避免父组件频繁 re-render 导致定时器被反复重置
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('show'), 350)
     const t2 = setTimeout(() => setPhase('out'), duration + 350)
-    const t3 = setTimeout(() => onDone?.(), duration + 550)
+    const t3 = setTimeout(() => onDoneRef.current?.(), duration + 550)
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
-  }, [duration, onDone])
+  }, [duration])
 
   if (phase === 'out' && !onDone) return null
 
@@ -39,7 +44,7 @@ const ToastMessage = memo(({ msg, type = 'warning', duration = 2500, onDone }: P
     <div
       style={{
         position: 'fixed',
-        top: 80,
+        top,
         left: '50%',
         transform: isOut
           ? 'translateX(-50%) translateY(0)'
@@ -65,7 +70,11 @@ const ToastMessage = memo(({ msg, type = 'warning', duration = 2500, onDone }: P
         boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
       }}
     >
-      <Icon size={17} color={colorMap[type]} style={{ flexShrink: 0 }} />
+      {icon ? (
+        <span style={{ flexShrink: 0, fontSize: 15, lineHeight: 1 }}>{icon}</span>
+      ) : (
+        <Icon size={17} color={colorMap[type]} style={{ flexShrink: 0 }} />
+      )}
       <span>{msg}</span>
     </div>
   )
