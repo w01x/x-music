@@ -61,6 +61,12 @@ const AppPlayerBar: FC<IProps> = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      // 方向键切换歌曲（整个播放器全局生效，输入框内不响应）
+      if (e.key === 'ArrowLeft') { e.preventDefault(); handleChangeMusic(false); return }
+      if (e.key === 'ArrowRight') { e.preventDefault(); handleChangeMusic(true); return }
+      // 上下键调节音量（步进 10）
+      if (e.key === 'ArrowUp') { e.preventDefault(); handleVolumeChange(Math.min(100, volumeRef.current + 10)); return }
+      if (e.key === 'ArrowDown') { e.preventDefault(); handleVolumeChange(Math.max(0, volumeRef.current - 10)); return }
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault()
         const audio = audioRef.current

@@ -25,7 +25,6 @@ const ImmersivePlayer = memo(() => {
   const [peek, setPeek] = useState(false)
   const [panelTab, setPanelTab] = useState<'queue' | 'mine'>('queue')
   const [myPlaylists, setMyPlaylists] = useState<PlaylistItem[]>([])
-  const [dominantColor, setDominantColor] = useState('#1a1a2e')
   const [isPlaying, setIsPlaying] = useState(false)
   const [barVisible, setBarVisible] = useState(true)
   const [liked, setLiked] = useState(false)
@@ -59,19 +58,6 @@ const ImmersivePlayer = memo(() => {
 
   /* ── 切换歌曲时重置封面错误状态 ── */
   useEffect(() => { setCoverError(false) }, [picUrl])
-
-  /* ── 主色 ── */
-  useEffect(() => {
-    if (!picUrl) return
-    const img = new Image(); img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      const c = document.createElement('canvas'); c.width = c.height = 10
-      const ctx = c.getContext('2d')!; ctx.drawImage(img, 0, 0, 10, 10)
-      const [r, g, b] = ctx.getImageData(0, 0, 10, 10).data
-      setDominantColor(`rgb(${r},${g},${b})`)
-    }
-    img.src = getImageSize(picUrl, 100)
-  }, [picUrl])
 
   /* ── 歌词滚动 ── */
   const activeRef = useRef<HTMLParagraphElement>(null)
@@ -176,7 +162,15 @@ const ImmersivePlayer = memo(() => {
 
   /* ── 键盘── */
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') { close(); return }; if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); e.stopPropagation(); togglePlayRef.current() } }
+    const k = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // 只退出沉浸模式，保留全屏（放大模式）状态
+        document.body.style.overflow = ''
+        dispatch(closeImmersive())
+        return
+      }
+      if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); e.stopPropagation(); togglePlayRef.current() }
+    }
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k)
   }, [])
   function close() { document.body.style.overflow = ''; dispatch(closeImmersive()); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}) }
@@ -211,7 +205,7 @@ const ImmersivePlayer = memo(() => {
 
   return createPortal(
     <>
-    <Overlay $color={dominantColor}>
+    <Overlay>
       <BgImage $src={coverUrl} /><Noise /><Particles><span className="p3" /></Particles>
       <CloseBtn onClick={close}>✕</CloseBtn>
 

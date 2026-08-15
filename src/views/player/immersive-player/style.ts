@@ -8,7 +8,7 @@ const thumbParticleA = keyframes`0%{opacity:.8;transform:translate(-50%,-50%)sca
 const thumbParticleB = keyframes`0%{opacity:.7;transform:translate(-50%,-50%)scale(1)}100%{opacity:0;transform:translate(16px,13px)scale(.22)}`
 
 /* ── 全屏 ─────────────────────────────── */
-export const Overlay = styled.div<{ $color: string }>`
+export const Overlay = styled.div`
   position: fixed; inset: 0; z-index: 200; display: flex;
   animation: ${fadeIn} .6s ease; overflow: hidden;
   overscroll-behavior: none;
@@ -17,13 +17,13 @@ export const Overlay = styled.div<{ $color: string }>`
 export const BgImage = styled.div<{ $src: string }>`
   position: absolute; inset: -60px;
   background: url(${({ $src }) => $src}) center/cover no-repeat;
-  filter: blur(100px) saturate(.6) brightness(.28);
+  filter: blur(100px) saturate(.95) brightness(.42);
   animation: ${drift} 35s ease-in-out infinite;
   &::after {
     content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 35% 45%, rgba(180,40,40,.12) 0%, transparent 60%),
-                radial-gradient(ellipse at 70% 60%, rgba(20,10,10,.08) 0%, transparent 50%),
-                rgba(0,0,0,.5);
+    background: radial-gradient(ellipse at 35% 45%, rgba(180,40,40,.14) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 60%, rgba(20,10,10,.1) 0%, transparent 50%),
+                rgba(0,0,0,.38);
   }
 `
 export const Noise = styled.div`
